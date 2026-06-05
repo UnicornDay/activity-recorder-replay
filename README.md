@@ -99,4 +99,4 @@ The main window shows:
 
 ## License
 
-MIT (or your preference — adjust as needed).
+[MIT](LICENSE) — do whatever you want with it.
