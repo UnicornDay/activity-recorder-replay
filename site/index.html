@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Activity Recorder & Replayer</title>
+<style>
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:640px;margin:60px auto;padding:20px;color:#222;line-height:1.55}
+  h1{margin-bottom:8px}
+  .tag{color:#888;font-size:14px;margin-bottom:24px}
+  ul{padding-left:20px}
+  li{margin:6px 0}
+  .price{font-size:32px;font-weight:700;margin:24px 0 8px}
+  .small{color:#888;font-size:13px}
+  button{background:#635bff;color:#fff;border:0;padding:14px 32px;font-size:18px;border-radius:8px;cursor:pointer;margin-top:12px}
+  button:disabled{background:#aaa;cursor:wait}
+  .err{color:#c00;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+  <h1>Activity Recorder & Replayer</h1>
+  <div class="tag">Record and replay your computer activity</div>
+
+  <p>Records mouse, keyboard, and window activity. Replays with smart visual-matching
+  click detection. AI-generated procedure summaries (Ollama, optional, free).</p>
+
+  <ul>
+    <li>Global hotkeys: <code>Ctrl+Shift+R</code> record, <code>Ctrl+Shift+P</code> replay</li>
+    <li>Smart visual click (finds the target even if the window moved)</li>
+    <li>Drag support, scroll support, window activation</li>
+    <li>Procedures library with one-click replay</li>
+    <li>Python source &mdash; works on Windows 10/11 with Python 3.10+</li>
+  </ul>
+
+  <div class="price">$29 <span class="small">one-time</span></div>
+
+  <button id="buy">Buy &amp; Download</button>
+  <div id="err" class="err"></div>
+
+<script>
+document.getElementById("buy").onclick = async () => {
+  const btn = document.getElementById("buy");
+  const err = document.getElementById("err");
+  btn.disabled = true; btn.textContent = "Redirecting to checkout...";
+  err.textContent = "";
+  try {
+    const r = await fetch("/.netlify/functions/create-checkout", { method: "POST" });
+    if (!r.ok) throw new Error("Server error: " + r.status);
+    const { url } = await r.json();
+    window.location = url;
+  } catch (e) {
+    err.textContent = "Could not start checkout. Please try again.";
+    btn.disabled = false; btn.textContent = "Buy & Download";
+  }
+};
+</script>
+</body>
+</html>

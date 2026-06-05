@@ -32,3 +32,7 @@ Thumbs.db
 
 # User-recorded activity sessions (keep local only)
 activity_logs/
+
+# Netlify
+.netlify/
+node_modules/

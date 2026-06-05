@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thanks!</title>
+<style>
+  body{font-family:-apple system,Segoe UI,Roboto,sans-serif;max-width:640px;margin:60px auto;padding:20px;color:#222;line-height:1.55}
+  h1{color:#0a7}
+  a.btn{display:inline-block;background:#0a7;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;margin-top:12px;font-size:18px}
+  .small{color:#888;font-size:13px;margin-top:24px}
+</style>
+</head>
+<body>
+  <h1>Thanks for your purchase!</h1>
+  <p>Your download is ready. Click the button below to download the source code as a zip:</p>
+  <a class="btn" id="dl" href="#">Download Source (.zip)</a>
+  <p class="small">The link is unique to this session. Save the zip &mdash;
+  it includes everything you need: <code>activity_gui.py</code>, requirements, and a
+  short README with install instructions.</p>
+  <p class="small">Questions? Email <a href="mailto:you@example.com">you@example.com</a></p>
+<script>
+  // Pull session_id from the URL and redirect to the download function
+  const sid = new URLSearchParams(location.search).get("session_id");
+  if (sid) {
+    document.getElementById("dl").href =
+      "/.netlify/functions/download?session_id=" + encodeURIComponent(sid);
+  }
+</script>
+</body>
+</html>
