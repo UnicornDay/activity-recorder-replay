@@ -9,8 +9,6 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "../..");
 const INCLUDE_PATTERNS = [
   "activity_gui.py",
-  "activity_recorder.py",
-  "activity_replay.py",
   "requirements.txt",
   "README.md",
 ];

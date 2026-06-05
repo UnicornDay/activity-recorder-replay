@@ -36,3 +36,6 @@ activity_logs/
 # Netlify
 .netlify/
 node_modules/
+
+# PyInstaller spec files
+*.spec

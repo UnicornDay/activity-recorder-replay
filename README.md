@@ -87,9 +87,7 @@ The main window shows:
 
 ## Files
 
-- `activity_gui.py` — the main GUI app (single file)
-- `activity_recorder.py` — standalone CLI recorder
-- `activity_replay.py` — standalone CLI replay
+- `activity_gui.py` — the entire app in one self-contained Python file
 - `requirements.txt` — Python dependencies
 
 ## Notes
