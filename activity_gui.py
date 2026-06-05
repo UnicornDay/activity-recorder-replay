@@ -1092,11 +1092,84 @@ class ActivityRecorderApp:
         # before the user has clicked Record.
         start_hotkey_listener()
 
+        # Check if Ollama is available (for AI procedure summaries).
+        # The app works without it — recording/replay don't need it —
+        # but warn the user once at startup if it's missing.
+        self.root.after(500, self._check_ollama)
+
     def _on_close(self):
         if is_recording():
             stop_recording()
         stop_hotkey_listener()
         self.root.destroy()
+
+    def _check_ollama(self):
+        """Check if Ollama is reachable and the default model is pulled.
+        If not, show a one-time info dialog. The app is fully usable
+        without Ollama — only AI procedure summaries need it."""
+        def probe():
+            try:
+                import ollama
+                resp = ollama.list()
+                # ollama-python returns a ListResponse object with .models
+                models_list = getattr(resp, "models", None) or resp.get("models", [])
+                names = []
+                for m in models_list:
+                    # m may be a pydantic Model or a dict
+                    name = getattr(m, "model", None) or m.get("model") or m.get("name", "")
+                    names.append(name.split(":")[0])
+                model = DEFAULT_AI_MODEL.split(":")[0]
+                if model in names:
+                    return ("ok", None)
+                else:
+                    return ("model_missing", model)
+            except ImportError:
+                return ("not_installed", None)
+            except Exception as e:
+                msg = str(e)
+                if "Connection" in msg or "refused" in msg or "11434" in msg:
+                    return ("not_running", None)
+                return ("error", msg)
+
+        def show():
+            status, detail = probe()
+            if status == "ok":
+                return  # everything's fine
+            if status == "not_installed":
+                messagebox.showinfo(
+                    "Ollama not installed (optional)",
+                    "AI procedure summaries are an optional feature.\n\n"
+                    "The app works fully without Ollama — record, replay, "
+                    "hotkeys, and the procedures library all work as-is.\n\n"
+                    "To enable AI-generated procedure titles & descriptions:\n"
+                    "  1. Install Ollama: https://ollama.com/download\n"
+                    "  2. Run: ollama pull ministral-3:3b\n"
+                    "  3. Restart this app",
+                    parent=self.root,
+                )
+            elif status == "not_running":
+                messagebox.showinfo(
+                    "Ollama not running (optional)",
+                    "AI procedure summaries are an optional feature.\n\n"
+                    "The app works fully without Ollama running — record, "
+                    "replay, hotkeys, and the procedures library all work.\n\n"
+                    "To enable AI summaries, start Ollama:\n"
+                    "  • Open the Ollama app, or\n"
+                    "  • Run in a terminal: ollama serve",
+                    parent=self.root,
+                )
+            elif status == "model_missing":
+                messagebox.showinfo(
+                    f"Ollama model '{detail}' not installed (optional)",
+                    "AI procedure summaries are an optional feature.\n\n"
+                    f"To pull the default model, run:\n"
+                    f"  ollama pull {DEFAULT_AI_MODEL}\n\n"
+                    "The app works fully without it.",
+                    parent=self.root,
+                )
+            # status == "error" — silent, don't bother the user
+
+        threading.Thread(target=lambda: self.root.after(0, show), daemon=True).start()
 
     def _build_ui(self):
         # ── Top bar: controls ──
@@ -1367,8 +1440,27 @@ class ActivityRecorderApp:
             try:
                 analyze_with_ai(self.last_log_path, model=model_name, on_chunk=stream_chunk)
                 out.insert(tk.END, "\n\n[done]")
+            except ImportError:
+                out.delete(1.0, tk.END)
+                out.insert(tk.END,
+                    "AI summaries require Ollama.\n\n"
+                    "Install: https://ollama.com/download\n"
+                    "Then run: ollama pull ministral-3:3b")
             except Exception as e:
-                out.insert(tk.END, f"\n\n[error: {e}]")
+                msg = str(e)
+                if "Connection" in msg or "refused" in msg or "11434" in msg:
+                    out.delete(1.0, tk.END)
+                    out.insert(tk.END,
+                        "Ollama is not running.\n\n"
+                        "Start it with: ollama serve\n"
+                        "Or open the Ollama app from the Start menu.")
+                elif "model" in msg.lower() and "not found" in msg.lower():
+                    out.delete(1.0, tk.END)
+                    out.insert(tk.END,
+                        f"Model '{model_name}' is not installed.\n\n"
+                        f"Run: ollama pull {model_name}")
+                else:
+                    out.insert(tk.END, f"\n\n[error: {e}]")
 
         threading.Thread(target=run, daemon=True).start()
 
@@ -1403,10 +1495,38 @@ class ActivityRecorderApp:
                 self.proc_area.insert(
                     tk.END, f"\n[saved: {rec['file_path']}]\n", "saved")
                 self.set_status(f"Procedure saved: {Path(rec['file_path']).name}")
-            except Exception as e:
+            except ImportError:
                 self.proc_area.delete(1.0, tk.END)
-                self.proc_area.insert(tk.END, f"[error: {e}]")
-                self.set_status(f"AI error: {e}")
+                self.proc_area.insert(tk.END,
+                    "AI summaries are optional. To enable them:\n\n"
+                    "  1. Install Ollama: https://ollama.com/download\n"
+                    "  2. Run: ollama pull ministral-3:3b\n"
+                    "  3. Click 'Analyze with AI' after recording\n\n"
+                    "Your recording was saved. Replay works without Ollama.")
+                self.set_status("AI unavailable — install Ollama for summaries")
+            except Exception as e:
+                msg = str(e)
+                if "Connection" in msg or "refused" in msg or "11434" in msg:
+                    self.proc_area.delete(1.0, tk.END)
+                    self.proc_area.insert(tk.END,
+                        "Ollama is not running. To enable AI summaries:\n\n"
+                        "  1. Install Ollama: https://ollama.com/download\n"
+                        "  2. Start it: ollama serve\n"
+                        "  3. Pull a model: ollama pull ministral-3:3b\n"
+                        "  4. Click 'Analyze with AI' after recording\n\n"
+                        "Your recording was saved. Replay works without Ollama.")
+                    self.set_status("Ollama not running — recording saved")
+                elif "model" in msg.lower() and "not found" in msg.lower():
+                    self.proc_area.delete(1.0, tk.END)
+                    self.proc_area.insert(tk.END,
+                        f"Model '{model_name}' is not installed.\n\n"
+                        f"Run: ollama pull {model_name}\n\n"
+                        "Your recording was saved. Replay works without Ollama.")
+                    self.set_status(f"Model missing — run: ollama pull {model_name}")
+                else:
+                    self.proc_area.delete(1.0, tk.END)
+                    self.proc_area.insert(tk.END, f"AI error: {e}")
+                    self.set_status(f"AI error: {e}")
 
         threading.Thread(target=run, daemon=True).start()
 
