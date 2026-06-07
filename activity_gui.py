@@ -1172,58 +1172,66 @@ class ActivityRecorderApp:
         threading.Thread(target=lambda: self.root.after(0, show), daemon=True).start()
 
     def _build_ui(self):
-        # ── Top bar: controls ──
+        # ── Top bar: two rows so action buttons + model are always visible ──
         top = ttk.Frame(self.root, padding=8)
         top.pack(fill=tk.X)
 
-        ttk.Label(top, text="Screenshot interval (s):").pack(side=tk.LEFT)
-        self.screenshot_var = tk.StringVar(value="30")
-        ttk.Entry(top, textvariable=self.screenshot_var, width=6).pack(side=tk.LEFT, padx=4)
+        # Row 1: main actions (always visible, no need to maximize)
+        row1 = ttk.Frame(top)
+        row1.pack(fill=tk.X, pady=(0, 6))
 
-        ttk.Label(top, text="  Replay speed:").pack(side=tk.LEFT)
-        self.speed_var = tk.StringVar(value="1.0")
-        ttk.Entry(top, textvariable=self.speed_var, width=6).pack(side=tk.LEFT, padx=4)
+        self.record_btn = ttk.Button(row1, text="Record", command=self.toggle_record)
+        self.record_btn.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.record_moves_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(top, text="Record mouse moves", variable=self.record_moves_var).pack(side=tk.LEFT, padx=6)
-
-        ttk.Separator(top, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=4)
-
-        self.fast_replay_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(top, text="Fast (coords only)", variable=self.fast_replay_var).pack(side=tk.LEFT, padx=2)
-        self.visual_match_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(top, text="Smart click (visual)", variable=self.visual_match_var).pack(side=tk.LEFT, padx=2)
-        ttk.Label(top, text="  Wait:").pack(side=tk.LEFT)
-        self.match_timeout_var = tk.StringVar(value="2")
-        ttk.Entry(top, textvariable=self.match_timeout_var, width=4).pack(side=tk.LEFT, padx=2)
-        ttk.Label(top, text="s").pack(side=tk.LEFT)
-        self.fail_on_no_match_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(top, text="Fail if no match", variable=self.fail_on_no_match_var).pack(side=tk.LEFT, padx=2)
-
-        ttk.Separator(top, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
-
-        self.record_btn = ttk.Button(top, text="Record", command=self.toggle_record)
-        self.record_btn.pack(side=tk.LEFT, padx=4)
-
-        self.replay_btn = ttk.Button(top, text="Replay Last", command=self.toggle_replay, state=tk.DISABLED)
+        self.replay_btn = ttk.Button(row1, text="Replay Last", command=self.toggle_replay, state=tk.DISABLED)
         self.replay_btn.pack(side=tk.LEFT, padx=4)
 
-        self.load_btn = ttk.Button(top, text="Load Log...", command=self.load_log)
+        self.load_btn = ttk.Button(row1, text="Load Log...", command=self.load_log)
         self.load_btn.pack(side=tk.LEFT, padx=4)
 
-        self.analyze_btn = ttk.Button(top, text="Analyze with AI", command=self.analyze_last, state=tk.DISABLED)
+        self.analyze_btn = ttk.Button(row1, text="Analyze with AI", command=self.analyze_last, state=tk.DISABLED)
         self.analyze_btn.pack(side=tk.LEFT, padx=4)
 
-        self.procedures_btn = ttk.Button(top, text="Show All Procedures", command=self.show_procedures)
+        self.procedures_btn = ttk.Button(row1, text="Show All Procedures", command=self.show_procedures)
         self.procedures_btn.pack(side=tk.LEFT, padx=4)
 
-        ttk.Label(top, text="  Model:").pack(side=tk.LEFT, padx=(8, 2))
-        self.model_var = tk.StringVar(value=DEFAULT_AI_MODEL)
-        ttk.Entry(top, textvariable=self.model_var, width=18).pack(side=tk.LEFT, padx=2)
+        ttk.Separator(row1, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
 
-        # Shortcut hints in the top bar
-        ttk.Separator(top, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
-        hints = ttk.Label(top, text="Ctrl+Shift+R: Record  |  Ctrl+Shift+P: Replay  |  Ctrl+Shift+O: Load  |  Ctrl+Shift+L: Procedures",
+        ttk.Label(row1, text="Model:").pack(side=tk.LEFT, padx=(0, 2))
+        self.model_var = tk.StringVar(value=DEFAULT_AI_MODEL)
+        ttk.Entry(row1, textvariable=self.model_var, width=18).pack(side=tk.LEFT, padx=2)
+
+        # Row 2: settings (less critical, can wrap if window is narrow)
+        row2 = ttk.Frame(top)
+        row2.pack(fill=tk.X)
+
+        ttk.Label(row2, text="Screenshot interval (s):").pack(side=tk.LEFT)
+        self.screenshot_var = tk.StringVar(value="30")
+        ttk.Entry(row2, textvariable=self.screenshot_var, width=6).pack(side=tk.LEFT, padx=4)
+
+        ttk.Label(row2, text="  Replay speed:").pack(side=tk.LEFT)
+        self.speed_var = tk.StringVar(value="1.0")
+        ttk.Entry(row2, textvariable=self.speed_var, width=6).pack(side=tk.LEFT, padx=4)
+
+        self.record_moves_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(row2, text="Record mouse moves", variable=self.record_moves_var).pack(side=tk.LEFT, padx=6)
+
+        ttk.Separator(row2, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=4)
+
+        self.fast_replay_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(row2, text="Fast (coords only)", variable=self.fast_replay_var).pack(side=tk.LEFT, padx=2)
+        self.visual_match_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(row2, text="Smart click (visual)", variable=self.visual_match_var).pack(side=tk.LEFT, padx=2)
+        ttk.Label(row2, text="  Wait:").pack(side=tk.LEFT)
+        self.match_timeout_var = tk.StringVar(value="2")
+        ttk.Entry(row2, textvariable=self.match_timeout_var, width=4).pack(side=tk.LEFT, padx=2)
+        ttk.Label(row2, text="s").pack(side=tk.LEFT)
+        self.fail_on_no_match_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(row2, text="Fail if no match", variable=self.fail_on_no_match_var).pack(side=tk.LEFT, padx=2)
+
+        # Shortcut hints in row 2 (right side)
+        ttk.Separator(row2, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=8)
+        hints = ttk.Label(row2, text="Ctrl+Shift+R/P/O/L",
                           foreground="gray")
         hints.pack(side=tk.LEFT, padx=6)
 
@@ -1301,6 +1309,10 @@ class ActivityRecorderApp:
             self.replay_btn.config(text="Replay Last", state=tk.NORMAL if self.last_log_path else tk.DISABLED)
             self.load_btn.config(state=tk.NORMAL)
             self.analyze_btn.config(state=tk.NORMAL if self.last_log_path else tk.DISABLED)
+            # Restore the window and bring to front so the user sees the AI summary
+            self.root.after(0, lambda: self.root.deiconify())
+            self.root.after(50, lambda: self.root.lift())
+            self.root.after(100, lambda: self.root.focus_force())
             self.set_status("Recording stopped - generating procedure...")
             # Auto-analyze and save as a procedure
             self.proc_area.delete(1.0, tk.END)
@@ -1311,7 +1323,7 @@ class ActivityRecorderApp:
                 interval = int(self.screenshot_var.get())
             except ValueError:
                 interval = 30
-            self.record_btn.config(text="Stop (ESC)", state=tk.NORMAL)
+            self.record_btn.config(text="Stop (ESC or Ctrl+Shift+R)", state=tk.NORMAL)
             self.replay_btn.config(state=tk.DISABLED)
             self.load_btn.config(state=tk.DISABLED)
             self.analyze_btn.config(state=tk.DISABLED)
@@ -1322,6 +1334,10 @@ class ActivityRecorderApp:
                 on_log=self.log,
                 on_status=self.set_status,
             )
+            # Minimize the window so it doesn't get in the way of the recording
+            # (or accidentally appear in screenshots)
+            self.root.iconify()
+            self.set_status("Recording... (Ctrl+Shift+R or ESC to stop)")
 
     # ── Replay ──
 
